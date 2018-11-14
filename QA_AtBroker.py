@@ -220,9 +220,9 @@ class QA_ATBroker(QA_Broker):
         registerFront==> onConnectFront ==> reqUserLogin
         ==> OnUserLogin ==>SubscribeMarketData(RB1901)
         ==> OnRtnDepthMarketData ==>q_OnTick
-        ==> order ==> ReqOrderInsert ==> OnRspOrderInsert
-        ==> OnRtnOrder ==> ReqOrderAction(撤单)
-        ==>
+        ==> order ==> ReqOrderInsert ==> OnRspOrderInsert 报单已提交
+        ==> OnRtnOrder 未成交==> ReqOrderAction(撤单)
+        ==> OnRtnOrder 已撤单
         """
 
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
@@ -231,6 +231,7 @@ class QA_ATBroker(QA_Broker):
         input()
         self.t.Release()
 
-if __name__=='__main__':
-    z=QA_ATBroker(investor='008107',pwd='1')
+
+if __name__ == '__main__':
+    z = QA_ATBroker(investor='008107', pwd='1')
     z.run()
