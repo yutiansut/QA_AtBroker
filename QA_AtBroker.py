@@ -15,13 +15,19 @@ import os
 import platform
 sys.path.append(QA.QASetting.QALocalize.bin_path)  # 调用QA_Binpath下的dll
 
+
 class Test:
 
     def __init__(self):
         self.Session = ''
         dllpath = os.path.join(QA.QASetting.QALocalize.bin_path, 'py_ctp_at')
-        self.q = Quote(os.path.join(dllpath, 'ctp_quote.' + ('dll' if 'Windows' in platform.system() else 'so')))
-        self.t = Trade(os.path.join(dllpath, 'ctp_trade.' + ('dll' if 'Windows' in platform.system() else 'so')))
+        self.con_path = '{}{}{}'.format(
+            QA.QASetting.QALocalize.cache_path, os.sep, 'at_ctp')
+        os.makedirs(self.con_path, exist_ok=True)
+        self.q = Quote(os.path.join(dllpath, 'ctp_quote.' +
+                                    ('dll' if 'Windows' in platform.system() else 'so')))
+        self.t = Trade(os.path.join(dllpath, 'ctp_trade.' +
+                                    ('dll' if 'Windows' in platform.system() else 'so')))
         self.req = 0
         self.ordered = False
         self.needAuth = False
@@ -29,7 +35,8 @@ class Test:
 
     def q_OnFrontConnected(self):
         print('connected')
-        self.q.ReqUserLogin(BrokerID=self.broker, UserID=self.investor, Password=self.pwd)
+        self.q.ReqUserLogin(BrokerID=self.broker,
+                            UserID=self.investor, Password=self.pwd)
 
     def q_OnRspUserLogin(self, rsp: ctp.CThostFtdcRspUserLoginField, info: ctp.CThostFtdcRspInfoField, req: int, last: bool):
         print(info)
@@ -74,23 +81,28 @@ class Test:
             return
         print('connected')
         if self.needAuth:
-            self.t.ReqAuthenticate(self.broker, self.investor, '@haifeng', '8MTL59FK1QGLKQW2')
+            self.t.ReqAuthenticate(
+                self.broker, self.investor, '@haifeng', '8MTL59FK1QGLKQW2')
         else:
-            self.t.ReqUserLogin(BrokerID=self.broker, UserID=self.investor, Password=self.pwd, UserProductInfo='@haifeng')
+            self.t.ReqUserLogin(BrokerID=self.broker, UserID=self.investor,
+                                Password=self.pwd, UserProductInfo='@haifeng')
 
     def OnFrontDisconnected(self, reason: int):
         print(reason)
 
     def OnRspAuthenticate(self, pRspAuthenticateField: ctp.CThostFtdcRspAuthenticateField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        print('auth：{0}:{1}'.format(pRspInfo.getErrorID(), pRspInfo.getErrorMsg()))
-        self.t.ReqUserLogin(BrokerID=self.broker, UserID=self.investor, Password=self.pwd, UserProductInfo='@haifeng')
+        print('auth：{0}:{1}'.format(
+            pRspInfo.getErrorID(), pRspInfo.getErrorMsg()))
+        self.t.ReqUserLogin(BrokerID=self.broker, UserID=self.investor,
+                            Password=self.pwd, UserProductInfo='@haifeng')
 
     def OnRspUserLogin(self, rsp: ctp.CThostFtdcRspUserLoginField, info: ctp.CThostFtdcRspInfoField, req: int, last: bool):
         print(info.getErrorMsg())
 
         if info.getErrorID() == 0:
             self.Session = rsp.getSessionID()
-            self.t.ReqSettlementInfoConfirm(BrokerID=self.broker, InvestorID=self.investor)
+            self.t.ReqSettlementInfoConfirm(
+                BrokerID=self.broker, InvestorID=self.investor)
         else:
             self.RelogEnable = False
 
@@ -99,7 +111,7 @@ class Test:
         _thread.start_new_thread(self.StartQuote, ())
 
     def StartQuote(self):
-        self.q.CreateApi()
+        self.q.CreateApi(self.con_path)
         spi = self.q.CreateSpi()
         self.q.RegisterSpi(spi)
 
@@ -145,7 +157,11 @@ class Test:
 
     def Run(self):
         # CreateApi时会用到log目录,需要在程序目录下创建**而非dll下**
-        self.t.CreateApi()
+        self.investor = '008107'
+        self.pwd = '1'
+        trade_con_path='{}{}{}'.format(self.con_path,os.sep,self.investor)
+        os.makedirs(trade_con_path,exist_ok=True)
+        self.t.CreateApi(trade_con_path)
         spi = self.t.CreateSpi()
         self.t.RegisterSpi(spi)
 
@@ -161,10 +177,10 @@ class Test:
         self.t.RegCB()
 
         #self.frontAddr = 'tcp://180.168.146.187:10000,tcp://180.168.146.187:10010'
-        self.frontAddr ='tcp://180.168.146.187:10030,tcp://180.168.146.187:10031'
+        self.frontAddr = 'tcp://180.168.146.187:10030,tcp://180.168.146.187:10031'
         self.broker = '9999'
-        self.investor = '008107'
-        self.pwd = '1'
+
+        
         self.t.RegisterFront(self.frontAddr.split(',')[0])
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
         self.t.SubscribePrivateTopic(nResumeType=2)
@@ -175,6 +191,7 @@ class Test:
 if __name__ == '__main__':
     t = Test()
     t.Run()
+    #t.StartQuote()
     input()
     t.t.Release()
     input()
