@@ -233,6 +233,11 @@ class QA_ATBroker(QA_Broker):
         """
         
         registerFront==> onConnectFront ==> reqUserLogin
+
+        ReqQryTradingAccount(self.broker, self.investor)
+        ReqQryInvestorPosition(self.broker, self.investor)
+
+        
         ==> OnUserLogin ==>SubscribeMarketData(RB1901)
         ==> OnRtnDepthMarketData ==>q_OnTick
         ==> order ==> ReqOrderInsert ==> OnRspOrderInsert 报单已提交
