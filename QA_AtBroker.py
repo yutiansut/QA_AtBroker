@@ -215,6 +215,16 @@ class QA_ATBroker(QA_Broker):
 
     def run(self):
         self.t.RegisterFront(self.front_td)
+        """
+        
+        registerFront==> onConnectFront ==> reqUserLogin
+        ==> OnUserLogin ==>SubscribeMarketData(RB1901)
+        ==> OnRtnDepthMarketData ==>q_OnTick
+        ==> order ==> ReqOrderInsert ==> OnRspOrderInsert
+        ==> OnRtnOrder ==> ReqOrderAction(撤单)
+        ==>
+        """
+
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
         self.t.SubscribePrivateTopic(nResumeType=2)
         self.t.Init()
