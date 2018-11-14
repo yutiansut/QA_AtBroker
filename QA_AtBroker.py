@@ -228,7 +228,8 @@ class QA_ATBroker(QA_Broker):
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
         self.t.SubscribePrivateTopic(nResumeType=2)
         self.t.Init()
-
+        input()
+        self.t.Release()
 
 if __name__=='__main__':
     z=QA_ATBroker(investor='008107',pwd='1')
