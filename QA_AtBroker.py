@@ -1,75 +1,88 @@
 
-from time import sleep
-import _thread
-import QUANTAXIS as QA
-from py_ctp.ctp_trade import Trade
-from py_ctp.ctp_quote import Quote
-import py_ctp.ctp_struct as ctp
-import sys
 import os
 import platform
+import sys
+from time import sleep
+
+import py_ctp.ctp_struct as ctp
+from py_ctp.ctp_quote import Quote
+from py_ctp.ctp_trade import Trade
+
+import _thread
+import QUANTAXIS as QA
+from QUANTAXIS.QAMarket.QABroker import QA_Broker
+
 sys.path.append(QA.QASetting.QALocalize.bin_path)  # 调用QA_Binpath下的dll
 
 
-class Test:
+class QA_ATBroker(QA_Broker):
+    def __init__(self,   investor='008107', pwd='1', broker='9999', front_md='tcp://180.168.146.187:10031', front_td='tcp://180.168.146.187:10030'):
 
-    def __init__(self):
-        self.Session = ''
-        dllpath = os.path.join(QA.QASetting.QALocalize.bin_path, 'py_ctp_at')
-        self.con_path = '{}{}{}'.format(
-            QA.QASetting.QALocalize.cache_path, os.sep, 'at_ctp')
-        os.makedirs(self.con_path, exist_ok=True)
-        self.q = Quote(os.path.join(dllpath, 'ctp_quote.' +
-                                    ('dll' if 'Windows' in platform.system() else 'so')))
-        self.t = Trade(os.path.join(dllpath, 'ctp_trade.' +
-                                    ('dll' if 'Windows' in platform.system() else 'so')))
         self.req = 0
         self.ordered = False
         self.needAuth = False
         self.RelogEnable = True
+        self.broker = broker
+        self.investor = investor
+        self.pwd = pwd
+        self.front_md = front_md
+        self.front_td = front_td
+        self.prepare()
+
+    def prepare(self):
+        """创建 trade/quote 
+
+        1. dll load
+        2. 实例化
+        3. 回调函数句柄替换
+        """
+
+        self.con_path = '{}{}{}'.format(
+            QA.QASetting.QALocalize.cache_path, os.sep, 'at_ctp')
+        os.makedirs(self.con_path, exist_ok=True)
+
+        self.trade_con_path = '{}{}{}'.format(
+            self.con_path, os.sep, self.investor)
+        os.makedirs(self.trade_con_path, exist_ok=True)
+
+        self.dllpath = os.path.join(
+            QA.QASetting.QALocalize.bin_path, 'py_ctp_at')
+
+        self.q = Quote(os.path.join(self.dllpath, 'ctp_quote.' +
+                                    ('dll' if 'Windows' in platform.system() else 'so')))
+        self.t = Trade(os.path.join(self.dllpath, 'ctp_trade.' +
+                                    ('dll' if 'Windows' in platform.system() else 'so')))
+
+        self.t.CreateApi(self.trade_con_path)
+        t_spi = self.t.CreateSpi()
+        self.t.RegisterSpi(t_spi)
+        self.q.CreateApi(self.con_path)
+        q_spi = self.q.CreateSpi()
+        self.q.RegisterSpi(q_spi)
+
+        self.t.OnFrontConnected = self.OnFrontConnected
+        self.t.OnFrontDisconnected = self.OnFrontDisconnected
+        self.t.OnRspUserLogin = self.OnRspUserLogin
+        self.t.OnRspSettlementInfoConfirm = self.OnRspSettlementInfoConfirm
+        self.t.OnRspAuthenticate = self.OnRspAuthenticate
+        self.t.OnRtnInstrumentStatus = self.OnRtnInstrumentStatus
+        self.t.OnRspOrderInsert = self.OnRspOrderInsert
+        self.t.OnRtnOrder = self.OnRtnOrder
+
+        self.q.OnFrontConnected = self.q_OnFrontConnected
+        self.q.OnRspUserLogin = self.q_OnRspUserLogin
+        self.q.OnRtnDepthMarketData = self.q_OnTick
+
+        self.t.RegCB()
+        self.q.RegCB()
 
     def q_OnFrontConnected(self):
         print('connected')
-        self.q.ReqUserLogin(BrokerID=self.broker,
-                            UserID=self.investor, Password=self.pwd)
+        self.login()
 
     def q_OnRspUserLogin(self, rsp: ctp.CThostFtdcRspUserLoginField, info: ctp.CThostFtdcRspInfoField, req: int, last: bool):
         print(info)
-        self.q.SubscribeMarketData('rb1812')
-
-    def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
-        f = tick
-        # print(tick)
-
-        if not self.ordered:
-            _thread.start_new_thread(self.Order, (f,))
-            self.ordered = True
-
-    def Order(self, f: ctp.CThostFtdcMarketDataField):
-        print("报单")
-        self.req += 1
-        self.t.ReqOrderInsert(
-            BrokerID=self.broker,
-            InvestorID=self.investor,
-            InstrumentID=f.getInstrumentID(),
-            OrderRef='{0:>12}'.format(self.req),
-            UserID=self.investor,
-            OrderPriceType=ctp.OrderPriceTypeType.LimitPrice,
-            Direction=ctp.DirectionType.Buy,
-            CombOffsetFlag=ctp.OffsetFlagType.Open.__char__(),
-            CombHedgeFlag=ctp.HedgeFlagType.Speculation.__char__(),
-            LimitPrice=f.getLastPrice() - 50,
-            VolumeTotalOriginal=1,
-            TimeCondition=ctp.TimeConditionType.GFD,
-            # GTDDate=''
-            VolumeCondition=ctp.VolumeConditionType.AV,
-            MinVolume=1,
-            ContingentCondition=ctp.ContingentConditionType.Immediately,
-            StopPrice=0,
-            ForceCloseReason=ctp.ForceCloseReasonType.NotForceClose,
-            IsAutoSuspend=0,
-            IsSwapOrder=0,
-            UserForceClose=0)
+        self.q.SubscribeMarketData('rb1901')
 
     def OnFrontConnected(self):
         if not self.RelogEnable:
@@ -105,31 +118,6 @@ class Test:
         # print(pSettlementInfoConfirm)
         _thread.start_new_thread(self.StartQuote, ())
 
-    def StartQuote(self):
-        self.q.CreateApi(self.con_path)
-        spi = self.q.CreateSpi()
-        self.q.RegisterSpi(spi)
-
-        self.q.OnFrontConnected = self.q_OnFrontConnected
-        self.q.OnRspUserLogin = self.q_OnRspUserLogin
-        self.q.OnRtnDepthMarketData = self.q_OnTick
-
-        self.q.RegCB()
-
-        self.q.RegisterFront(self.frontAddr.split(',')[1])
-        self.q.Init()
-        # self.q.Join()
-
-    def Qry(self):
-        sleep(1.1)
-        self.t.ReqQryInstrument()
-        while True:
-            sleep(1.1)
-            self.t.ReqQryTradingAccount(self.broker, self.investor)
-            sleep(1.1)
-            self.t.ReqQryInvestorPosition(self.broker, self.investor)
-            return
-
     def OnRtnInstrumentStatus(self, pInstrumentStatus: ctp.CThostFtdcInstrumentStatusField):
         print(pInstrumentStatus.getInstrumentStatus())
 
@@ -150,43 +138,88 @@ class Test:
                 SessionID=pOrder.getSessionID(),
                 ActionFlag=ctp.ActionFlagType.Delete)
 
-    def Run(self):
-        # CreateApi时会用到log目录,需要在程序目录下创建**而非dll下**
-        self.investor = '008107'
-        self.pwd = '1'
-        trade_con_path='{}{}{}'.format(self.con_path,os.sep,self.investor)
-        os.makedirs(trade_con_path,exist_ok=True)
-        self.t.CreateApi(trade_con_path)
-        spi = self.t.CreateSpi()
-        self.t.RegisterSpi(spi)
+    def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
+        f = tick
+        # print(tick)
 
-        self.t.OnFrontConnected = self.OnFrontConnected
-        self.t.OnFrontDisconnected = self.OnFrontDisconnected
-        self.t.OnRspUserLogin = self.OnRspUserLogin
-        self.t.OnRspSettlementInfoConfirm = self.OnRspSettlementInfoConfirm
-        self.t.OnRspAuthenticate = self.OnRspAuthenticate
-        self.t.OnRtnInstrumentStatus = self.OnRtnInstrumentStatus
-        self.t.OnRspOrderInsert = self.OnRspOrderInsert
-        self.t.OnRtnOrder = self.OnRtnOrder
-        # _thread.start_new_thread(self.Qry, ())
-        self.t.RegCB()
+        if not self.ordered:
+            _thread.start_new_thread(self.Order, (f,))
+            self.ordered = True
 
-        #self.frontAddr = 'tcp://180.168.146.187:10000,tcp://180.168.146.187:10010'
-        self.frontAddr = 'tcp://180.168.146.187:10030,tcp://180.168.146.187:10031'
-        self.broker = '9999'
+    def StartQuote(self):
+        self.q.CreateApi(self.con_path)
+        spi = self.q.CreateSpi()
+        self.q.RegisterSpi(spi)
 
-        
-        self.t.RegisterFront(self.frontAddr.split(',')[0])
+        self.q.OnFrontConnected = self.q_OnFrontConnected
+        self.q.OnRspUserLogin = self.q_OnRspUserLogin
+        self.q.OnRtnDepthMarketData = self.q_OnTick
+
+        self.q.RegCB()
+
+        self.q.RegisterFront(self.front_md)
+        self.q.Init()
+        # self.q.Join()
+
+    def Qry(self):
+        sleep(1.1)
+        self.t.ReqQryInstrument()
+        while True:
+            sleep(1.1)
+            self.t.ReqQryTradingAccount(self.broker, self.investor)
+            sleep(1.1)
+            self.t.ReqQryInvestorPosition(self.broker, self.investor)
+            return
+
+    def Order(self, f: ctp.CThostFtdcMarketDataField):
+        print("报单")
+        self.req += 1
+        self.t.ReqOrderInsert(
+            BrokerID=self.broker,
+            InvestorID=self.investor,
+            InstrumentID=f.getInstrumentID(),
+            OrderRef='{0:>12}'.format(self.req),
+            UserID=self.investor,
+            OrderPriceType=ctp.OrderPriceTypeType.LimitPrice,
+            Direction=ctp.DirectionType.Buy,
+            CombOffsetFlag=ctp.OffsetFlagType.Open.__char__(),
+            CombHedgeFlag=ctp.HedgeFlagType.Speculation.__char__(),
+            LimitPrice=f.getLastPrice() - 50,
+            VolumeTotalOriginal=1,
+            TimeCondition=ctp.TimeConditionType.GFD,
+            # GTDDate=''
+            VolumeCondition=ctp.VolumeConditionType.AV,
+            MinVolume=1,
+            ContingentCondition=ctp.ContingentConditionType.Immediately,
+            StopPrice=0,
+            ForceCloseReason=ctp.ForceCloseReasonType.NotForceClose,
+            IsAutoSuspend=0,
+            IsSwapOrder=0,
+            UserForceClose=0)
+
+    def login(self):
+        self.q.ReqUserLogin(BrokerID=self.broker,
+                            UserID=self.investor, Password=self.pwd)
+
+    def query_orders(self):
+        pass
+
+    def query_deal(self):
+        pass
+
+    def query_positions(self):
+        pass
+
+    def receive_order(self):
+        pass
+
+    def run(self):
+        self.t.RegisterFront(self.front_td)
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
         self.t.SubscribePrivateTopic(nResumeType=2)
         self.t.Init()
-        # self.t.Join()
 
 
-if __name__ == '__main__':
-    t = Test()
-    t.Run()
-    #t.StartQuote()
-    input()
-    t.t.Release()
-    input()
+if __name__=='__main__':
+    z=QA_ATBroker(investor='008107',pwd='1')
+    z.run()
