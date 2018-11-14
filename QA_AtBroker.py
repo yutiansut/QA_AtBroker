@@ -5,11 +5,6 @@ import QUANTAXIS as QA
 from py_ctp.ctp_trade import Trade
 from py_ctp.ctp_quote import Quote
 import py_ctp.ctp_struct as ctp
-"""
-__title__ = ''
-__author__ = 'HaiFeng'
-__mtime__ = '2016/9/13'
-"""
 import sys
 import os
 import platform
