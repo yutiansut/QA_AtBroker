@@ -140,7 +140,22 @@ class QA_ATBroker(QA_Broker):
 
     def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
         f = tick
-        # print(tick)
+        print(tick)
+        """
+        TradingDay = '20181113', InstrumentID = 'rb1901', ExchangeID = '', 
+        ExchangeInstID = '', LastPrice = 3878.0, PreSettlementPrice = 3869.0, PreClosePrice = 3848.0, 
+        PreOpenInterest = 2500080.0, OpenPrice = 3850.0, HighestPrice = 3895.0, LowestPrice = 3835.0, 
+        Volume = 2100784, Turnover = 81223915140.0, OpenInterest = 2450594.0, ClosePrice = 1.7976931348623157e+308, 
+        SettlementPrice = 1.7976931348623157e+308, UpperLimitPrice = 4139.0, LowerLimitPrice = 3598.0, 
+        PreDelta = 0.0, CurrDelta = 1.7976931348623157e+308, UpdateTime = '04:05:21', UpdateMillisec = 500,
+        BidPrice1 = 3877.0, BidVolume1 = 506, AskPrice1 = 3878.0, AskVolume1 = 228, 
+        BidPrice2 = 1.7976931348623157e+308, BidVolume2 = 0, AskPrice2 = 1.7976931348623157e+308, AskVolume2 = 0,
+        BidPrice3 = 1.7976931348623157e+308, BidVolume3 = 0, AskPrice3 = 1.7976931348623157e+308, AskVolume3 = 0, 
+        BidPrice4 = 1.7976931348623157e+308, BidVolume4 = 0, AskPrice4 = 1.7976931348623157e+308, AskVolume4 = 0, 
+        BidPrice5 = 1.7976931348623157e+308, BidVolume5 = 0, AskPrice5 = 1.7976931348623157e+308, AskVolume5 = 0, 
+        AveragePrice = 38663.62041028492, ActionDay = '20181113'
+        """
+
 
         if not self.ordered:
             _thread.start_new_thread(self.Order, (f,))
