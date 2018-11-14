@@ -128,15 +128,15 @@ class QA_ATBroker(QA_Broker):
 
     def OnRtnOrder(self, pOrder: ctp.CThostFtdcOrderField):
         print(pOrder)
-        if pOrder.getSessionID() == self.Session and pOrder.getOrderStatus() == ctp.OrderStatusType.NoTradeQueueing:
-            print("撤单")
-            self.t.ReqOrderAction(
-                self.broker, self.investor,
-                InstrumentID=pOrder.getInstrumentID(),
-                OrderRef=pOrder.getOrderRef(),
-                FrontID=pOrder.getFrontID(),
-                SessionID=pOrder.getSessionID(),
-                ActionFlag=ctp.ActionFlagType.Delete)
+        # if pOrder.getSessionID() == self.Session and pOrder.getOrderStatus() == ctp.OrderStatusType.NoTradeQueueing:
+        #     print("撤单")
+        #     self.t.ReqOrderAction(
+        #         self.broker, self.investor,
+        #         InstrumentID=pOrder.getInstrumentID(),
+        #         OrderRef=pOrder.getOrderRef(),
+        #         FrontID=pOrder.getFrontID(),
+        #         SessionID=pOrder.getSessionID(),
+        #         ActionFlag=ctp.ActionFlagType.Delete)
 
     def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
         f = tick
