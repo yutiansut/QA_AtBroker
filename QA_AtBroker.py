@@ -9,6 +9,7 @@ from py_ctp.ctp_quote import Quote
 from py_ctp.ctp_trade import Trade
 
 import _thread
+import pandas as pd
 import QUANTAXIS as QA
 from QUANTAXIS.QAMarket.QABroker import QA_Broker
 
@@ -28,6 +29,7 @@ class QA_ATBroker(QA_Broker):
         self.front_md = front_md
         self.front_td = front_td
         self.prepare()
+        self.market_data = []
 
     def prepare(self):
         """创建 trade/quote 
@@ -115,7 +117,9 @@ class QA_ATBroker(QA_Broker):
             self.RelogEnable = False
 
     def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: ctp.CThostFtdcSettlementInfoConfirmField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        # print(pSettlementInfoConfirm)
+        """确认成交信息
+        """
+        print(pSettlementInfoConfirm)
         _thread.start_new_thread(self.StartQuote, ())
 
     def OnRtnInstrumentStatus(self, pInstrumentStatus: ctp.CThostFtdcInstrumentStatusField):
@@ -138,9 +142,20 @@ class QA_ATBroker(QA_Broker):
         #         SessionID=pOrder.getSessionID(),
         #         ActionFlag=ctp.ActionFlagType.Delete)
 
+    def tick_handle(self, tick):
+        
+        self.market_data.append(pd.DataFrame([vars(tick)]))
+        df = pd.concat(self.market_data)
+        df = df.assign(datetime=df.ActionDay.apply(str)+' ' +
+                       df.UpdateTime.apply(str) + ' ' + df.UpdateMillisec.apply(str), code=df.InstrumentID).set_index(['datetime', 'code'])
+        print(df)
+
+
     def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
         f = tick
-        print(tick)
+
+
+
         """
         TradingDay = '20181113', InstrumentID = 'rb1901', ExchangeID = '', 
         ExchangeInstID = '', LastPrice = 3878.0, PreSettlementPrice = 3869.0, PreClosePrice = 3848.0, 
@@ -155,8 +170,7 @@ class QA_ATBroker(QA_Broker):
         BidPrice5 = 1.7976931348623157e+308, BidVolume5 = 0, AskPrice5 = 1.7976931348623157e+308, AskVolume5 = 0, 
         AveragePrice = 38663.62041028492, ActionDay = '20181113'
         """
-
-
+        _thread.start_new_thread(self.tick_handle, (tick,))
         if not self.ordered:
             _thread.start_new_thread(self.Order, (f,))
             self.ordered = True
@@ -253,5 +267,6 @@ class QA_ATBroker(QA_Broker):
 
 
 if __name__ == '__main__':
-    z = QA_ATBroker(investor='008107', pwd='1')
+    # z = QA_ATBroker(investor='008107', pwd='1'),front_md='tcp://180.168.146.187:10010',front_td='tcp://180.168.146.187:10000'
+    z = QA_ATBroker(investor='106184', pwd='940809')
     z.run()
