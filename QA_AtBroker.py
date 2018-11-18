@@ -33,8 +33,13 @@ class QA_ATBroker(QA_Broker):
         self.prepare()
         self.market_data = []
         self.min_t = 0
+        self._trading_code = []
 
         self.subscribed_code = []
+
+    @property
+    def trading_code(self):
+        return set(self._trading_code)
 
     def prepare(self):
         """创建 trade/quote 
@@ -91,7 +96,7 @@ class QA_ATBroker(QA_Broker):
         QA.QA_util_log_info('userlogin')
         QA.QA_util_log_info(info)
         # self.q.SubscribeMarketData('rb1901')
-        self.subscribe(['jm1901','rb1901'])
+        self.subscribe(['jm1901', 'rb1901'])
 
     def subscribe(self, code):
         if isinstance(code, list):
@@ -145,12 +150,12 @@ class QA_ATBroker(QA_Broker):
 
         BrokerID = '9999', InvestorID = '106184', ConfirmDate = '20181116', ConfirmTime = '19:41:14', SettlementID = 0, AccountID = '', CurrencyID = ''
         """
-
         _thread.start_new_thread(self.StartQuote, ())
 
     def OnRtnInstrumentStatus(self, pInstrumentStatus: ctp.CThostFtdcInstrumentStatusField):
-        QA.QA_util_log_info('instrumentStatus')
-        QA.QA_util_log_info(str(pInstrumentStatus))
+        # QA.QA_util_log_info('instrumentStatus')
+        # QA.QA_util_log_info(str(pInstrumentStatus))
+        self._trading_code.append(str(pInstrumentStatus.InstrumentID,encoding='utf-8'))
 
     def OnRspOrderInsert(self, pInputOrder: ctp.CThostFtdcInputOrderField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         QA.QA_util_log_info(pRspInfo)
@@ -200,6 +205,7 @@ class QA_ATBroker(QA_Broker):
         BidPrice5 = 1.7976931348623157e+308, BidVolume5 = 0, AskPrice5 = 1.7976931348623157e+308, AskVolume5 = 0, 
         AveragePrice = 38663.62041028492, ActionDay = '20181113'
         """
+        print(self.trading_code)
         _thread.start_new_thread(self.tick_handle, (tick,))
         if not self.ordered:
             _thread.start_new_thread(self.Order, (f,))
