@@ -9,7 +9,9 @@ from py_ctp.ctp_quote import Quote
 from py_ctp.ctp_trade import Trade
 
 import _thread
+import threading
 import pandas as pd
+import numpy as np
 import QUANTAXIS as QA
 from QUANTAXIS.QAMarket.QABroker import QA_Broker
 
@@ -17,7 +19,7 @@ sys.path.append(QA.QASetting.QALocalize.bin_path)  # 调用QA_Binpath下的dll
 
 
 class QA_ATBroker(QA_Broker):
-    def __init__(self,   investor='008107', pwd='1', broker='9999', front_md='tcp://180.168.146.187:10031', front_td='tcp://180.168.146.187:10030'):
+    def __init__(self, investor='008107', pwd='1', broker='9999', front_md='tcp://180.168.146.187:10031', front_td='tcp://180.168.146.187:10030'):
 
         self.req = 0
         self.ordered = False
@@ -30,6 +32,9 @@ class QA_ATBroker(QA_Broker):
         self.front_td = front_td
         self.prepare()
         self.market_data = []
+        self.min_t = 0
+
+        self.subscribed_code = []
 
     def prepare(self):
         """创建 trade/quote 
@@ -79,35 +84,49 @@ class QA_ATBroker(QA_Broker):
         self.q.RegCB()
 
     def q_OnFrontConnected(self):
-        print('connected')
+        QA.QA_util_log_info('connected')
         self.login()
 
     def q_OnRspUserLogin(self, rsp: ctp.CThostFtdcRspUserLoginField, info: ctp.CThostFtdcRspInfoField, req: int, last: bool):
-        print(info)
-        self.q.SubscribeMarketData('rb1901')
+        QA.QA_util_log_info('userlogin')
+        QA.QA_util_log_info(info)
+        # self.q.SubscribeMarketData('rb1901')
+        self.subscribe(['jm1901','rb1901'])
+
+    def subscribe(self, code):
+        if isinstance(code, list):
+            for item in code:
+                try:
+                    self.q.SubscribeMarketData(item)
+                    self.subscribed_code.append(item)
+                except:
+                    pass
+        elif isinstance(code, str):
+            self.subscribe([code])
 
     def OnFrontConnected(self):
         if not self.RelogEnable:
             return
-        print('connected')
+        QA.QA_util_log_info('connected')
         if self.needAuth:
             self.t.ReqAuthenticate(
-                self.broker, self.investor, '@haifeng', '8MTL59FK1QGLKQW2')
+                # broker / investor / userProductionInfo / AuthCode
+                self.broker, self.investor, '@yutiansut', '8MTL59FK1QGLKQW2')
         else:
             self.t.ReqUserLogin(BrokerID=self.broker, UserID=self.investor,
-                                Password=self.pwd, UserProductInfo='@haifeng')
+                                Password=self.pwd, UserProductInfo='@yutiansut')
 
     def OnFrontDisconnected(self, reason: int):
-        print(reason)
+        QA.QA_util_log_info(reason)
 
     def OnRspAuthenticate(self, pRspAuthenticateField: ctp.CThostFtdcRspAuthenticateField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        print('auth：{0}:{1}'.format(
+        QA.QA_util_log_info('auth：{0}:{1}'.format(
             pRspInfo.getErrorID(), pRspInfo.getErrorMsg()))
         self.t.ReqUserLogin(BrokerID=self.broker, UserID=self.investor,
-                            Password=self.pwd, UserProductInfo='@haifeng')
+                            Password=self.pwd, UserProductInfo='@yutiansut')
 
     def OnRspUserLogin(self, rsp: ctp.CThostFtdcRspUserLoginField, info: ctp.CThostFtdcRspInfoField, req: int, last: bool):
-        print(info.getErrorMsg())
+        QA.QA_util_log_info(info.getErrorMsg())  # CTP:正确小于2种字符:请注意修改
 
         if info.getErrorID() == 0:
             self.Session = rsp.getSessionID()
@@ -119,21 +138,30 @@ class QA_ATBroker(QA_Broker):
     def OnRspSettlementInfoConfirm(self, pSettlementInfoConfirm: ctp.CThostFtdcSettlementInfoConfirmField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """确认成交信息
         """
-        print(pSettlementInfoConfirm)
+        QA.QA_util_log_info('settlementInfo')
+        QA.QA_util_log_info(pSettlementInfoConfirm)
+        """
+        example of  settlementInfoConfirm
+
+        BrokerID = '9999', InvestorID = '106184', ConfirmDate = '20181116', ConfirmTime = '19:41:14', SettlementID = 0, AccountID = '', CurrencyID = ''
+        """
+
         _thread.start_new_thread(self.StartQuote, ())
 
     def OnRtnInstrumentStatus(self, pInstrumentStatus: ctp.CThostFtdcInstrumentStatusField):
-        print(pInstrumentStatus.getInstrumentStatus())
+        QA.QA_util_log_info('instrumentStatus')
+        QA.QA_util_log_info(str(pInstrumentStatus))
 
     def OnRspOrderInsert(self, pInputOrder: ctp.CThostFtdcInputOrderField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        print(pRspInfo)
-        print(pInputOrder)
-        print(pRspInfo.getErrorMsg())
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(pInputOrder)
+        QA.QA_util_log_info(pRspInfo.getErrorMsg())
 
     def OnRtnOrder(self, pOrder: ctp.CThostFtdcOrderField):
-        print(pOrder)
+        QA.QA_util_log_info(pOrder)
+        QA.QA_util_log_info(pOrder.getOrderStatus())
         # if pOrder.getSessionID() == self.Session and pOrder.getOrderStatus() == ctp.OrderStatusType.NoTradeQueueing:
-        #     print("撤单")
+        #     QA.QA_util_log_info("撤单")
         #     self.t.ReqOrderAction(
         #         self.broker, self.investor,
         #         InstrumentID=pOrder.getInstrumentID(),
@@ -142,20 +170,22 @@ class QA_ATBroker(QA_Broker):
         #         SessionID=pOrder.getSessionID(),
         #         ActionFlag=ctp.ActionFlagType.Delete)
 
-    def tick_handle(self, tick):
-        
+    def tick_handle(self, tick: ctp.CThostFtdcMarketDataField):
+
         self.market_data.append(pd.DataFrame([vars(tick)]))
         df = pd.concat(self.market_data)
         df = df.assign(datetime=df.ActionDay.apply(str)+' ' +
                        df.UpdateTime.apply(str) + ' ' + df.UpdateMillisec.apply(str), code=df.InstrumentID).set_index(['datetime', 'code'])
-        print(df)
+        df = df.replace(1.7976931348623157e+308, np.nan).dropna(axis='columns')
 
+        self.min_t += 1
+
+        if self.min_t % 10 == 0:
+            QA.QA_util_log_info(df)
+            QA.QA_util_log_info(threading.enumerate())
 
     def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
         f = tick
-
-
-
         """
         TradingDay = '20181113', InstrumentID = 'rb1901', ExchangeID = '', 
         ExchangeInstID = '', LastPrice = 3878.0, PreSettlementPrice = 3869.0, PreClosePrice = 3848.0, 
@@ -201,7 +231,7 @@ class QA_ATBroker(QA_Broker):
             return
 
     def Order(self, f: ctp.CThostFtdcMarketDataField):
-        print("报单")
+        QA.QA_util_log_info("报单")
         self.req += 1
         self.t.ReqOrderInsert(
             BrokerID=self.broker,
@@ -260,8 +290,10 @@ class QA_ATBroker(QA_Broker):
         """
 
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
-        self.t.SubscribePrivateTopic(nResumeType=2)
+        # self.t.SubscribePrivateTopic(nResumeType=2)
         self.t.Init()
+
+        # self.Qry()
         input()
         self.t.Release()
 
