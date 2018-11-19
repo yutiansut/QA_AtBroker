@@ -93,6 +93,8 @@ class QA_ATBroker(QA_Broker):
         self.t.OnRspQryInstrument = self.OnRspQryInstrument
         self.t.OnRspQryDepthMarketData = self.OnRspQryDepthMarketData
 
+        self.t.OnErrRtnOrderInsert = self.OnErrRtnOrderInsert
+        self.t.OnErrRtnOrderAction = self.OnErrRtnOrderAction
         self.q.OnFrontConnected = self.q_OnFrontConnected
         self.q.OnRspUserLogin = self.q_OnRspUserLogin
         self.q.OnRtnDepthMarketData = self.q_OnTick
@@ -111,8 +113,8 @@ class QA_ATBroker(QA_Broker):
         self.subscribe(['jm1901', 'rb1901'])
 
     def q_OnRtnDepthMarketData(self, pDepthMarketData: ctp.CThostFtdcDepthMarketDataField):
-        print('OnRtnDepthMarketData:, pDepthMarketData: CThostFtdcDepthMarketDataField')
-        print(pDepthMarketData)
+        QA.QA_util_log_info('OnRtnDepthMarketData:, pDepthMarketData: CThostFtdcDepthMarketDataField')
+        QA.QA_util_log_info(pDepthMarketData)
 
 
     def subscribe(self, code):
@@ -168,6 +170,16 @@ class QA_ATBroker(QA_Broker):
         BrokerID = '9999', InvestorID = '106184', ConfirmDate = '20181116', ConfirmTime = '19:41:14', SettlementID = 0, AccountID = '', CurrencyID = ''
         """
         _thread.start_new_thread(self.StartQuote, ())
+
+    def OnErrRtnOrderInsert(self, pInputOrder: ctp.CThostFtdcInputOrderField, pRspInfo: ctp.CThostFtdcRspInfoField):
+        QA.QA_util_log_info('OnErrRtnOrderInsert:, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField')
+        QA.QA_util_log_info(pInputOrder)
+        QA.QA_util_log_info(pRspInfo)
+
+    def OnErrRtnOrderAction(self, pOrderAction: ctp.CThostFtdcOrderActionField, pRspInfo: ctp.CThostFtdcRspInfoField):
+        QA.QA_util_log_info('OnErrRtnOrderAction:, pOrderAction: CThostFtdcOrderActionField, pRspInfo: CThostFtdcRspInfoField')
+        QA.QA_util_log_info(pOrderAction)
+        QA.QA_util_log_info(pRspInfo)
 
     def OnRtnInstrumentStatus(self, pInstrumentStatus: ctp.CThostFtdcInstrumentStatusField):
         # QA.QA_util_log_info('instrumentStatus')
