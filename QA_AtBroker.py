@@ -84,6 +84,15 @@ class QA_ATBroker(QA_Broker):
         self.t.OnRspQryTradingAccount = self.OnRspQryTradingAccount
         self.t.OnRspQryInvestor = self.OnRspQryInvestor
 
+        self.t.OnRspQryTradingCode = self.OnRspQryTradingCode
+        self.t.OnRspQryInstrumentMarginRate = self.OnRspQryInstrumentMarginRate
+        self.t.OnRspQryInstrumentCommissionRate = self.OnRspQryInstrumentCommissionRate
+        self.t.OnRspQryExchange = self.OnRspQryExchange
+        self.t.OnRspQryProduct = self.OnRspQryProduct
+
+        self.t.OnRspQryInstrument = self.OnRspQryInstrument
+        self.t.OnRspQryDepthMarketData = self.OnRspQryDepthMarketData
+
         self.q.OnFrontConnected = self.q_OnFrontConnected
         self.q.OnRspUserLogin = self.q_OnRspUserLogin
         self.q.OnRtnDepthMarketData = self.q_OnTick
@@ -100,6 +109,11 @@ class QA_ATBroker(QA_Broker):
         QA.QA_util_log_info(info)
         # self.q.SubscribeMarketData('rb1901')
         self.subscribe(['jm1901', 'rb1901'])
+
+    def q_OnRtnDepthMarketData(self, pDepthMarketData: ctp.CThostFtdcDepthMarketDataField):
+        print('OnRtnDepthMarketData:, pDepthMarketData: CThostFtdcDepthMarketDataField')
+        print(pDepthMarketData)
+
 
     def subscribe(self, code):
         if isinstance(code, list):
@@ -177,14 +191,14 @@ class QA_ATBroker(QA_Broker):
 
     def OnRspQryInvestorPosition(self, pInvestorPosition: ctp.CThostFtdcInvestorPositionField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """[summary]
-        
+
         Arguments:
             pInvestorPosition {ctp.CThostFtdcInvestorPositionField} -- [description]
             pRspInfo {ctp.CThostFtdcRspInfoField} -- [description]
             nRequestID {int} -- [description]
             bIsLast {bool} -- [description]
-        
-        
+
+
         InstrumentID = 'cs1909',合约代码
         BrokerID = '9999', 经纪公司代码
         InvestorID = '106184', 投资者代码
@@ -242,13 +256,13 @@ class QA_ATBroker(QA_Broker):
 
     def OnRspQryTradingAccount(self, pTradingAccount: ctp.CThostFtdcTradingAccountField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """[summary]
-        
+
         Arguments:
             pTradingAccount {ctp.CThostFtdcTradingAccountField} -- [description]
             pRspInfo {ctp.CThostFtdcRspInfoField} -- [description]
             nRequestID {int} -- [description]
             bIsLast {bool} -- [description]
-        
+
 
         BrokerID = '9999', 经纪公司代码
         AccountID = '106184',投资者帐号 
@@ -309,9 +323,101 @@ class QA_ATBroker(QA_Broker):
         QA.QA_util_log_info(bIsLast)
 
     def OnRspQryInvestor(self, pInvestor: ctp.CThostFtdcInvestorField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        """[summary]
+
+        Arguments:
+            pInvestor {ctp.CThostFtdcInvestorField} -- [description]
+            pRspInfo {ctp.CThostFtdcRspInfoField} -- [description]
+            nRequestID {int} -- [description]
+            bIsLast {bool} -- [description]
+
+                ("InvestorID", c_char*13),
+        # 经纪公司代码
+        ("BrokerID", c_char*11),
+        # 投资者分组代码
+        ("InvestorGroupID", c_char*13),
+        # 投资者名称
+        ("InvestorName", c_char*81),
+        # 证件类型
+        ("IdentifiedCardType", c_char),
+        # 证件号码
+        ("IdentifiedCardNo", c_char*51),
+        # 是否活跃
+        ("IsActive", c_int32),
+        # 联系电话
+        ("Telephone", c_char*41),
+        # 通讯地址
+        ("Address", c_char*101),
+        # 开户日期
+        ("OpenDate", c_char*9),
+        # 手机
+        ("Mobile", c_char*41),
+        # 手续费率模板代码
+        ("CommModelID", c_char*13),
+        # 保证金率模板代码
+        ("MarginModelID", c_char*13),
+        """
+
         QA.QA_util_log_info(
             'OnRspQryInvestor:, pInvestor: CThostFtdcInvestorField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
         QA.QA_util_log_info(pInvestor)
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryTradingCode(self, pTradingCode: ctp.CThostFtdcTradingCodeField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info(
+            'OnRspQryTradingCode:, pTradingCode: CThostFtdcTradingCodeField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(pTradingCode)
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryInstrumentMarginRate(self, pInstrumentMarginRate: ctp.CThostFtdcInstrumentMarginRateField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info(
+            'OnRspQryInstrumentMarginRate:, pInstrumentMarginRate: CThostFtdcInstrumentMarginRateField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(pInstrumentMarginRate)
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryInstrumentCommissionRate(self, pInstrumentCommissionRate: ctp.CThostFtdcInstrumentCommissionRateField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info(
+            'OnRspQryInstrumentCommissionRate:, pInstrumentCommissionRate: CThostFtdcInstrumentCommissionRateField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(pInstrumentCommissionRate)
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryExchange(self, pExchange: ctp.CThostFtdcExchangeField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info(
+            'OnRspQryExchange:, pExchange: CThostFtdcExchangeField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(pExchange)
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryProduct(self, pProduct: ctp.CThostFtdcProductField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info(
+            'OnRspQryProduct:, pProduct: CThostFtdcProductField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(pProduct)
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryInstrument(self, pInstrument: ctp.CThostFtdcInstrumentField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info(
+            'OnRspQryInstrument:, pInstrument: CThostFtdcInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(str(pInstrument))
+        QA.QA_util_log_info(pRspInfo)
+        QA.QA_util_log_info(nRequestID)
+        QA.QA_util_log_info(bIsLast)
+
+    def OnRspQryDepthMarketData(self, pDepthMarketData: ctp.CThostFtdcDepthMarketDataField, pRspInfo: ctp.CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        QA.QA_util_log_info('DEPTH MARKET')
+        QA.QA_util_log_info(
+            'OnRspQryDepthMarketData:, pDepthMarketData: CThostFtdcDepthMarketDataField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool')
+        QA.QA_util_log_info(pDepthMarketData)
         QA.QA_util_log_info(pRspInfo)
         QA.QA_util_log_info(nRequestID)
         QA.QA_util_log_info(bIsLast)
@@ -385,12 +491,12 @@ class QA_ATBroker(QA_Broker):
     def Qry(self):
         sleep(1.1)
         self.t.ReqQryInstrument()
-        while True:
-            sleep(1.1)
-            self.t.ReqQryTradingAccount(self.broker, self.investor)
-            sleep(1.1)
-            self.t.ReqQryInvestorPosition(self.broker, self.investor)
-            return
+        # while True:
+        #     sleep(1.1)
+        #     self.t.ReqQryTradingAccount(self.broker, self.investor)
+        #     sleep(1.1)
+        #     #self.t.ReqQryInvestorPosition(self.broker, self.investor)
+        #     return
 
     def Order(self, f: ctp.CThostFtdcMarketDataField):
         QA.QA_util_log_info("报单")
@@ -405,7 +511,7 @@ class QA_ATBroker(QA_Broker):
             Direction=ctp.DirectionType.Buy,
             CombOffsetFlag=ctp.OffsetFlagType.Open.__char__(),
             CombHedgeFlag=ctp.HedgeFlagType.Speculation.__char__(),
-            LimitPrice=f.getLastPrice() - 50,
+            LimitPrice=f.getLastPrice() +1,
             VolumeTotalOriginal=1,
             TimeCondition=ctp.TimeConditionType.GFD,
             # GTDDate=''
@@ -454,10 +560,14 @@ class QA_ATBroker(QA_Broker):
         self.t.SubscribePrivateTopic(nResumeType=2)  # quick
         # self.t.SubscribePrivateTopic(nResumeType=2)
         self.t.Init()
+
+        self.t.ReqQryDepthMarketData('rb1905','SHFE')
         self.t.ReqQryTradingAccount(self.broker, self.investor)
-        sleep(1.1)
-        #self.t.ReqQryInvestorPosition(self.broker, self.investor)
         self.Qry()
+        #self.t.ReqQryInvestor(self.broker, self.investor)
+        sleep(1.1)
+        self.t.ReqQryInvestorPosition(self.broker, self.investor)
+
         input()
         self.t.Release()
 
