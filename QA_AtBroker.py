@@ -458,7 +458,7 @@ class QA_ATBroker(QA_Broker):
         if isinstance(z, dict):
             z = json.dumps(z)
             # print(z)
-            
+
             self.pro.pub(z)
         # self.market_data.append(pd.DataFrame([vars(tick)]))
         # df = pd.concat(self.market_data)
@@ -473,7 +473,8 @@ class QA_ATBroker(QA_Broker):
         #     QA.QA_util_log_info(threading.enumerate())
 
     def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
-        f = tick
+        self.tick_handle(tick)
+        #f = tick
         """
         TradingDay = '20181113', InstrumentID = 'rb1901', ExchangeID = '', 
         ExchangeInstID = '', LastPrice = 3878.0, PreSettlementPrice = 3869.0, PreClosePrice = 3848.0, 
@@ -489,7 +490,7 @@ class QA_ATBroker(QA_Broker):
         AveragePrice = 38663.62041028492, ActionDay = '20181113'
         """
         # QA.QA_util_log_info(self.trading_code)
-        _thread.start_new_thread(self.tick_handle, (tick,))
+        #_thread.start_new_thread(self.tick_handle, (tick,))
         # if not self.ordered:
         #     _thread.start_new_thread(self.Order, (f,))
         #     self.ordered = True
