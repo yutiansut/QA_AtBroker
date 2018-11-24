@@ -13,6 +13,8 @@ import threading
 import pandas as pd
 import numpy as np
 import QUANTAXIS as QA
+import json
+from QAPUBSUB import producer
 from QUANTAXIS.QAMarket.QABroker import QA_Broker
 
 sys.path.append(QA.QASetting.QALocalize.bin_path)  # 调用QA_Binpath下的dll
@@ -34,7 +36,7 @@ class QA_ATBroker(QA_Broker):
         self.market_data = []
         self.min_t = 0
         self._trading_code = []
-
+        self.pro = producer.publisher(exchange='ctp')
         self.subscribed_code = []
 
     @property
@@ -113,9 +115,9 @@ class QA_ATBroker(QA_Broker):
         self.subscribe(['jm1901', 'rb1901'])
 
     def q_OnRtnDepthMarketData(self, pDepthMarketData: ctp.CThostFtdcDepthMarketDataField):
-        QA.QA_util_log_info('OnRtnDepthMarketData:, pDepthMarketData: CThostFtdcDepthMarketDataField')
+        QA.QA_util_log_info(
+            'OnRtnDepthMarketData:, pDepthMarketData: CThostFtdcDepthMarketDataField')
         QA.QA_util_log_info(pDepthMarketData)
-
 
     def subscribe(self, code):
         if isinstance(code, list):
@@ -172,12 +174,14 @@ class QA_ATBroker(QA_Broker):
         _thread.start_new_thread(self.StartQuote, ())
 
     def OnErrRtnOrderInsert(self, pInputOrder: ctp.CThostFtdcInputOrderField, pRspInfo: ctp.CThostFtdcRspInfoField):
-        QA.QA_util_log_info('OnErrRtnOrderInsert:, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField')
+        QA.QA_util_log_info(
+            'OnErrRtnOrderInsert:, pInputOrder: CThostFtdcInputOrderField, pRspInfo: CThostFtdcRspInfoField')
         QA.QA_util_log_info(pInputOrder)
         QA.QA_util_log_info(pRspInfo)
 
     def OnErrRtnOrderAction(self, pOrderAction: ctp.CThostFtdcOrderActionField, pRspInfo: ctp.CThostFtdcRspInfoField):
-        QA.QA_util_log_info('OnErrRtnOrderAction:, pOrderAction: CThostFtdcOrderActionField, pRspInfo: CThostFtdcRspInfoField')
+        QA.QA_util_log_info(
+            'OnErrRtnOrderAction:, pOrderAction: CThostFtdcOrderActionField, pRspInfo: CThostFtdcRspInfoField')
         QA.QA_util_log_info(pOrderAction)
         QA.QA_util_log_info(pRspInfo)
 
@@ -450,18 +454,23 @@ class QA_ATBroker(QA_Broker):
         #         ActionFlag=ctp.ActionFlagType.Delete)
 
     def tick_handle(self, tick: ctp.CThostFtdcMarketDataField):
+        z = vars(tick)
+        if isinstance(z, dict):
+            z = json.dumps(z)
+            # print(z)
+            
+            self.pro.pub(z)
+        # self.market_data.append(pd.DataFrame([vars(tick)]))
+        # df = pd.concat(self.market_data)
+        # df = df.assign(datetime=df.ActionDay.apply(str)+' ' +
+        #                df.UpdateTime.apply(str) + ' ' + df.UpdateMillisec.apply(str), code=df.InstrumentID).set_index(['datetime', 'code'])
+        # df = df.replace(1.7976931348623157e+308, np.nan).dropna(axis='columns')
 
-        self.market_data.append(pd.DataFrame([vars(tick)]))
-        df = pd.concat(self.market_data)
-        df = df.assign(datetime=df.ActionDay.apply(str)+' ' +
-                       df.UpdateTime.apply(str) + ' ' + df.UpdateMillisec.apply(str), code=df.InstrumentID).set_index(['datetime', 'code'])
-        df = df.replace(1.7976931348623157e+308, np.nan).dropna(axis='columns')
+        # self.min_t += 1
 
-        self.min_t += 1
-
-        if self.min_t % 10 == 0:
-            QA.QA_util_log_info(df)
-            QA.QA_util_log_info(threading.enumerate())
+        # if self.min_t % 10 == 0:
+        #     QA.QA_util_log_info(df)
+        #     QA.QA_util_log_info(threading.enumerate())
 
     def q_OnTick(self, tick: ctp.CThostFtdcMarketDataField):
         f = tick
@@ -481,9 +490,9 @@ class QA_ATBroker(QA_Broker):
         """
         # QA.QA_util_log_info(self.trading_code)
         _thread.start_new_thread(self.tick_handle, (tick,))
-        if not self.ordered:
-            _thread.start_new_thread(self.Order, (f,))
-            self.ordered = True
+        # if not self.ordered:
+        #     _thread.start_new_thread(self.Order, (f,))
+        #     self.ordered = True
 
     def StartQuote(self):
         self.q.CreateApi(self.con_path)
@@ -523,7 +532,7 @@ class QA_ATBroker(QA_Broker):
             Direction=ctp.DirectionType.Buy,
             CombOffsetFlag=ctp.OffsetFlagType.Open.__char__(),
             CombHedgeFlag=ctp.HedgeFlagType.Speculation.__char__(),
-            LimitPrice=f.getLastPrice() +1,
+            LimitPrice=f.getLastPrice() + 1,
             VolumeTotalOriginal=1,
             TimeCondition=ctp.TimeConditionType.GFD,
             # GTDDate=''
@@ -573,9 +582,10 @@ class QA_ATBroker(QA_Broker):
         # self.t.SubscribePrivateTopic(nResumeType=2)
         self.t.Init()
 
-        self.t.ReqQryDepthMarketData('rb1905','SHFE')
+        self.t.ReqQryDepthMarketData('rb1905', 'SHFE')
         self.t.ReqQryTradingAccount(self.broker, self.investor)
         self.Qry()
+        # print(self.t.orders)
         #self.t.ReqQryInvestor(self.broker, self.investor)
         sleep(1.1)
         self.t.ReqQryInvestorPosition(self.broker, self.investor)
@@ -586,5 +596,6 @@ class QA_ATBroker(QA_Broker):
 
 if __name__ == '__main__':
     # z = QA_ATBroker(investor='008107', pwd='1'),front_md='tcp://180.168.146.187:10010',front_td='tcp://180.168.146.187:10000'
-    z = QA_ATBroker(investor='106184', pwd='940809')
+    z = QA_ATBroker(investor='106184', pwd='930426')
+    #z = QA_ATBroker(investor='901417', pwd='666888',broker='66666', front_md='tcp://ctpfz1-front3.citicsf.com:51213',front_td='tcp://ctpfz1-front3.citicsf.com:51205')
     z.run()
