@@ -457,9 +457,11 @@ class QA_ATBroker(QA_Broker):
         z = vars(tick)
         if isinstance(z, dict):
             z = json.dumps(z)
-            # print(z)
+            #print(z)
 
             self.pro.pub(z)
+        else:
+            print(z)
         # self.market_data.append(pd.DataFrame([vars(tick)]))
         # df = pd.concat(self.market_data)
         # df = df.assign(datetime=df.ActionDay.apply(str)+' ' +
