@@ -109,10 +109,10 @@ class QA_ATBroker(QA_Broker):
         self.login()
 
     def q_OnRspUserLogin(self, rsp: ctp.CThostFtdcRspUserLoginField, info: ctp.CThostFtdcRspInfoField, req: int, last: bool):
-        QA.QA_util_log_info('userlogin')
+        QA.QA_util_log_info('==============userlogin')
         QA.QA_util_log_info(info)
         # self.q.SubscribeMarketData('rb1901')
-        self.subscribe(['jm1901', 'rb1901'])
+        self.subscribe(['rb1905'])
 
     def q_OnRtnDepthMarketData(self, pDepthMarketData: ctp.CThostFtdcDepthMarketDataField):
         QA.QA_util_log_info(
@@ -535,7 +535,7 @@ class QA_ATBroker(QA_Broker):
             Direction=ctp.DirectionType.Buy,
             CombOffsetFlag=ctp.OffsetFlagType.Open.__char__(),
             CombHedgeFlag=ctp.HedgeFlagType.Speculation.__char__(),
-            LimitPrice=f.getLastPrice() + 1,
+            LimitPrice=f.getLastPrice() + 50,
             VolumeTotalOriginal=1,
             TimeCondition=ctp.TimeConditionType.GFD,
             # GTDDate=''
@@ -598,7 +598,7 @@ class QA_ATBroker(QA_Broker):
 
 
 if __name__ == '__main__':
-    # z = QA_ATBroker(investor='008107', pwd='1'),front_md='tcp://180.168.146.187:10010',front_td='tcp://180.168.146.187:10000'
-    z = QA_ATBroker(investor='106184', pwd='930426')
+    z = QA_ATBroker(investor='106184', pwd='930426',front_md='tcp://218.202.237.33:10012',front_td='tcp://218.202.237.33:10002')
+    #z = QA_ATBroker(investor='106184', pwd='930426')
     #z = QA_ATBroker(investor='901417', pwd='666888',broker='66666', front_md='tcp://ctpfz1-front3.citicsf.com:51213',front_td='tcp://ctpfz1-front3.citicsf.com:51205')
     z.run()
