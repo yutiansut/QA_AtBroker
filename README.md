@@ -7,5 +7,5 @@ QUANTAXIS_HaifengAtpy_Broker
 
 
 1. 首先复制 bin文件夹到  ~/.quantaxis 下
-2. pip install py_ctp  然后用目录中的py_ctp替换 sitepackage中的 py_ctp
+2. pip install quantaxis_ctp  (或者 cd到 qa_ctp 目录 python setup.py install)
 3. 运行QA_AtBroker.py
