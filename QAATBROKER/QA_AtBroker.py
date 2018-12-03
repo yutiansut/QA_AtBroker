@@ -4,9 +4,9 @@ import platform
 import sys
 from time import sleep
 
-import py_ctp.ctp_struct as ctp
-from py_ctp.ctp_quote import Quote
-from py_ctp.ctp_trade import Trade
+import QACTP.ctp_struct as ctp
+from QACTP.ctp_quote import Quote
+from QACTP.ctp_trade import Trade
 
 import _thread
 import threading
@@ -598,7 +598,5 @@ class QA_ATBroker(QA_Broker):
 
 
 if __name__ == '__main__':
-    z = QA_ATBroker(investor='106184', pwd='930426',front_md='tcp://218.202.237.33:10012',front_td='tcp://218.202.237.33:10002')
-    #z = QA_ATBroker(investor='106184', pwd='930426')
-    #z = QA_ATBroker(investor='901417', pwd='666888',broker='66666', front_md='tcp://ctpfz1-front3.citicsf.com:51213',front_td='tcp://ctpfz1-front3.citicsf.com:51205')
+    z = QA_ATBroker(front_md='tcp://218.202.237.33:10012',front_td='tcp://218.202.237.33:10002')
     z.run()
