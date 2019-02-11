@@ -457,7 +457,7 @@ class QA_ATBroker(QA_Broker):
         z = vars(tick)
         if isinstance(z, dict):
             z = json.dumps(z)
-            #print(z)
+            # print(z)
 
             self.pro.pub(z)
         else:
@@ -598,5 +598,6 @@ class QA_ATBroker(QA_Broker):
 
 
 if __name__ == '__main__':
-    z = QA_ATBroker(front_md='tcp://218.202.237.33:10012',front_td='tcp://218.202.237.33:10002')
+    z = QA_ATBroker(front_md='tcp://218.202.237.33:10012',
+                    front_td='tcp://218.202.237.33:10002')
     z.run()
