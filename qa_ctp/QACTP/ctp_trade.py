@@ -2552,6 +2552,9 @@ class Trade:
         struc.TradingDay = bytes(TradingDay, encoding='ascii')
         struc.AccountID = bytes(AccountID, encoding='ascii')
         struc.CurrencyID = bytes(CurrencyID, encoding='ascii')
+        print('req!!')
+        #print(struc)
+        #print(byref(struc))
 
         self.nRequestID += 1
         self.h.ReqQrySettlementInfo(self.api, byref(struc), self.nRequestID)

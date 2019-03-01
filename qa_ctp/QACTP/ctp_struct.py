@@ -3045,7 +3045,8 @@ class CThostFtdcSettlementInfoField(Structure):
         return str(self.CurrencyID, 'GB2312')
 
     def __str__(self):
-        return 'TradingDay = \'{0}\', SettlementID = {1}, BrokerID = \'{2}\', InvestorID = \'{3}\', SequenceNo = {4}, Content = \'{5}\', AccountID = \'{6}\', CurrencyID = \'{7}\''.format(str(self.TradingDay, 'GB2312'), self.SettlementID, str(self.BrokerID, 'GB2312'), str(self.InvestorID, 'GB2312'), self.SequenceNo, str(self.Content, 'GB2312'), str(self.AccountID, 'GB2312'), str(self.CurrencyID, 'GB2312'))
+        return str(self.Content, 'GB2312')
+        #return 'TradingDay = \'{0}\', SettlementID = {1}, BrokerID = \'{2}\', InvestorID = \'{3}\', SequenceNo = {4}, Content = \'{5}\', AccountID = \'{6}\', CurrencyID = \'{7}\''.format(str(self.TradingDay, 'GB2312'), self.SettlementID, str(self.BrokerID, 'GB2312'), str(self.InvestorID, 'GB2312'), self.SequenceNo, str(self.Content, 'GB2312'), str(self.AccountID, 'GB2312'), str(self.CurrencyID, 'GB2312'))
 
     @property
     def __dict__(self):
