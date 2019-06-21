@@ -19,15 +19,14 @@ class CtpQuote(object):
     """"""
 
     def __init__(self):
-        self.q = Quote(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'lib', 'ctp_quote.' + ('dll' if 'Windows' in platform.system() else 'so')))
+        self.q = Quote()
         self.inst_tick = {}
         self.logined = False
 
     def ReqConnect(self, pAddress: str):
-        """
-        连接行情前置
-            :param self: 
-            :param pAddress:str: 
+        """连接行情前置
+
+        :param pAddress:
         """
         self.q.CreateApi()
         spi = self.q.CreateSpi()
@@ -45,29 +44,28 @@ class CtpQuote(object):
         self.q.Init()
 
     def ReqUserLogin(self, user: str, pwd: str, broker: str):
-        """
-        登录
-            :param self:
-            :param user:str:
-            :param pwd:str:
-            :param broker:str:
+        """登录
+
+        :param user:
+        :param pwd:
+        :param broker:
         """
         self.q.ReqUserLogin(BrokerID=broker, UserID=user, Password=pwd)
 
     def ReqSubscribeMarketData(self, pInstrument: str):
-        """
-        订阅合约行情
-            :param self:
-            :param pInstrument:str:
+        """订阅合约行情
+
+        :param pInstrument:
         """
         self.q.SubscribeMarketData(pInstrument)
 
     def ReqUserLogout(self):
-        """
-        退出接口
-            :param self: 
-        """
+        """退出接口(正常退出,不会触发OnFrontDisconnected)"""
+
         self.q.Release()
+        # 确保隔夜或重新登录时的第1个tick不被发送到客户端
+        self.inst_tick.clear()
+        self.logined = False
         threading.Thread(target=self.OnDisConnected, args=(self, 0)).start()
 
     def _OnFrontConnected(self):
@@ -78,6 +76,7 @@ class CtpQuote(object):
         """"""
         # 确保隔夜或重新登录时的第1个tick不被发送到客户端
         self.inst_tick.clear()
+        self.logined = False
         threading.Thread(target=self.OnDisConnected, args=(self, reason)).start()
 
     def _OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
@@ -131,19 +130,19 @@ class CtpQuote(object):
 
     def OnDisConnected(self, obj, error: int):
         """"""
-        print('disconnected: ' + str(error))
+        print(f'=== [QUOTE] OnDisConnected===\nerror: {str(error)}')
 
     def OnConnected(self, obj):
         """"""
-        print('connected')
+        print('=== [QUOTE] OnConnected ===')
 
     def OnUserLogin(self, obj, info: InfoField):
         """"""
-        print(info)
+        print(f'=== [QUOTE] OnUserLogin ===\n{info}')
 
     def OnTick(self, obj, f: Tick):
         """"""
-        print(f.__dict__)
+        print(f'=== [QUOTE] OnTick ===\n{f.__dict__}')
 
 
 def connected(obj):
