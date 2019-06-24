@@ -6,7 +6,7 @@ __mtime__ = '2018/12/10'
 
 
 from ctypes import *
-from .ctp_enum import *
+from QACTP.ctp_enum import *
 
 class  CThostFtdcDisseminationField(Structure):
     """信息分发"""

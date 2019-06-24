@@ -4,7 +4,7 @@ __title__ = ''
 __author__ = 'HaiFeng'
 __mtime__ = ''
 
-from .trade import CtpTrade
+from QACTP.trade import CtpTrade
 import time
 
 

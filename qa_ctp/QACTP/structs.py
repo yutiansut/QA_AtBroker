@@ -6,7 +6,7 @@ __author__ = 'HaiFeng'
 __mtime__ = '2016/9/21'
 """
 
-from .enums import DirectType, OffsetType, OrderStatus, HedgeType, TradeTypeType
+from QACTP.enums import DirectType, OffsetType, OrderStatus, HedgeType, TradeTypeType
 
 
 class InfoField:

@@ -10,9 +10,9 @@ import threading
 import platform
 import os
 
-from .structs import InfoField, Tick
-from .ctp_quote import Quote
-from .ctp_struct import CThostFtdcRspUserLoginField, CThostFtdcRspInfoField, CThostFtdcDepthMarketDataField, CThostFtdcSpecificInstrumentField
+from QACTP.structs import InfoField, Tick
+from QACTP.ctp_quote import Quote
+from QACTP.ctp_struct import CThostFtdcRspUserLoginField, CThostFtdcRspInfoField, CThostFtdcDepthMarketDataField, CThostFtdcSpecificInstrumentField
 
 
 class CtpQuote(object):

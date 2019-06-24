@@ -10,7 +10,7 @@ import sys
 import platform
 import ctypes
 import copy
-from .ctp_struct import *
+from QACTP.ctp_struct import *
 
 
 class Trade:

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 import _thread
-from .ctp_trade import Trade
-from .ctp_quote import Quote
-from .ctp_struct import *
+from QACTP.ctp_trade import Trade
+from QACTP.ctp_quote import Quote
+from QACTP.ctp_struct import *
 
 """
 __title__ = ''
